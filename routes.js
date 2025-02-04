@@ -9,10 +9,16 @@ const router = express.Router();
 
 // ✅ Middleware for JWT Authentication
 const authenticate = (req, res, next) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: "Unauthorized: Please log in" });
-  }
-  next();
+  const token = req.headers["authorization"]?.split(" ")[1];
+  console.log("Token received:", token); // Log to see if token is received correctly
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  jwt.verify(token, "your-secret-key", (err, decoded) => {
+    if (err) return res.status(403).json({ message: "Invalid Token" });
+    req.userId = decoded.userId;
+    console.log("Decoded User ID:", req.userId); // Log to see the decoded userId
+    next();
+  });
 };
 
 // ✅ Fetch all carpenters
@@ -50,7 +56,6 @@ router.get("/slots/:carpenterId", async (req, res) => {
 });
 
 // ✅ Book a slot (Fixed)
-// ✅ Book a slot (Fixed with real-time update)
 router.post("/book", authenticate, async (req, res) => {
   try {
     console.log("User ID from JWT:", req.userId);

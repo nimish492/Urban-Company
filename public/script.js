@@ -1,4 +1,9 @@
 $(document).ready(function () {
+  $("#loginModal").on("hidden.bs.modal", function () {
+    $(".modal-backdrop").remove(); // Force remove the backdrop
+    $("body").removeClass("modal-open"); // Ensure scrolling is enabled
+  });
+
   checkAuthStatus();
 
   const socket = io(); // Establish Socket.IO connection with the server
@@ -23,6 +28,12 @@ $(document).ready(function () {
     }
   });
 
+  socket.on("disconnect", function () {
+    console.warn("Server disconnected. Logging out...");
+    localStorage.removeItem("token"); // Remove token
+    location.reload(); // Refresh to force login
+  });
+
   // Handle Login Form Submission
   $("#loginForm").submit(async function (e) {
     e.preventDefault();
@@ -35,7 +46,6 @@ $(document).ready(function () {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
-        credentials: "include",
       });
 
       const data = await response.json();
@@ -50,23 +60,14 @@ $(document).ready(function () {
     }
   });
 
-  // Handle Logout
-  $("#logoutBtn").click(async function () {
-    try {
-      await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      localStorage.removeItem("token");
-      alert("Logged out successfully");
-      location.reload();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+  // Modify Logout
+  $("#logoutBtn").click(function () {
+    localStorage.removeItem("token");
+    alert("Logged out successfully");
+    location.reload();
   });
 
-  // Check Authentication Status
+  // Check if user is logged in
   function checkAuthStatus() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -76,6 +77,8 @@ $(document).ready(function () {
       });
     }
   }
+
+  checkAuthStatus();
 
   // Show Bootstrap Login Modal
   function showLoginModal() {
@@ -171,15 +174,19 @@ $(document).ready(function () {
   }
 
   function bookSlot(slotId, button) {
-    if (!localStorage.getItem("token")) {
-      showLoginModal();
+    const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+    if (!token) {
+      showLoginModal(); // If no token is found, prompt the user to log in
       return;
     }
 
     $.ajax({
-      url: "/api/book",
+      url: "/api/book", // The API endpoint for booking
       method: "POST",
       contentType: "application/json",
+      headers: {
+        Authorization: `Bearer ${token}`, // Add the token to the Authorization header
+      },
       data: JSON.stringify({ slotId }),
       success: function () {
         button
@@ -202,9 +209,18 @@ $(document).ready(function () {
     }
 
     function fetchReservations() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showLoginModal();
+        return;
+      }
+
       $.ajax({
         url: `/api/reservations`,
         method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`, // Pass token in the Authorization header
+        },
         success: function (data) {
           const reservationList = $("#reservation-list").empty();
 
@@ -225,39 +241,39 @@ $(document).ready(function () {
             const carpenter = reservation.carpenterId || {};
 
             const card = $(`
-              <div class="card mb-3 shadow-lg p-3 mb-5 bg-body rounded" style="width: 18rem;">
-                <img src="/assets/${
-                  carpenter.image || "default.jpg"
-                }" class="card-img-top" alt="Carpenter Image">
-                <div class="card-body">
-                  <h5 class="card-title">${
-                    carpenter.name || "Unknown Carpenter"
-                  }</h5>
+                <div class="card mb-3 shadow-lg p-3 mb-5 bg-body rounded" style="width: 18rem;">
+                  <img src="/assets/${
+                    carpenter.image || "default.jpg"
+                  }" class="card-img-top" alt="Carpenter Image">
+                  <div class="card-body">
+                    <h5 class="card-title">${
+                      carpenter.name || "Unknown Carpenter"
+                    }</h5>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Email:</strong> ${
+                      carpenter.email || "Not Available"
+                    }</li>
+                    <li class="list-group-item"><strong>Phone:</strong> ${
+                      carpenter.phone || "Not Available"
+                    }</li>
+                    <li class="list-group-item"><strong>Slot:</strong> ${
+                      reservation.slotId?.startTime || "N/A"
+                    } - ${reservation.slotId?.endTime || "N/A"}</li>
+                    <li class="list-group-item"><strong>Status:</strong> <span class="status-${statusClass}">${statusText}</span></li>
+                  </ul>
+                  <div class="card-body action-buttons">
+                    ${
+                      reservation.confirmMessage
+                        ? '<p class="thank-you-message text-success">Thank you for choosing me</p>'
+                        : `
+                      <button class="btn btn-success confirm-btn" data-id="${reservation._id}">Confirm</button>
+                      <button class="btn btn-danger cancel-btn" data-id="${reservation._id}">Cancel</button>
+                      `
+                    }
+                  </div>
                 </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item"><strong>Email:</strong> ${
-                    carpenter.email || "Not Available"
-                  }</li>
-                  <li class="list-group-item"><strong>Phone:</strong> ${
-                    carpenter.phone || "Not Available"
-                  }</li>
-                  <li class="list-group-item"><strong>Slot:</strong> ${
-                    reservation.slotId?.startTime || "N/A"
-                  } - ${reservation.slotId?.endTime || "N/A"}</li>
-                  <li class="list-group-item"><strong>Status:</strong> <span class="status-${statusClass}">${statusText}</span></li>
-                </ul>
-                <div class="card-body action-buttons">
-                  ${
-                    reservation.confirmMessage
-                      ? '<p class="thank-you-message text-success">Thank you for choosing me</p>'
-                      : `
-                    <button class="btn btn-success confirm-btn" data-id="${reservation._id}">Confirm</button>
-                    <button class="btn btn-danger cancel-btn" data-id="${reservation._id}">Cancel</button>
-                    `
-                  }
-                </div>
-              </div>
-            `);
+              `);
             reservationList.append(card);
           });
 
@@ -276,10 +292,19 @@ $(document).ready(function () {
     }
 
     function confirmReservation(reservationId, button) {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showLoginModal();
+        return;
+      }
+
       $.ajax({
         url: "/api/confirm-reservation",
         method: "POST",
         contentType: "application/json",
+        headers: {
+          Authorization: `Bearer ${token}`, // Pass token in the Authorization header
+        },
         data: JSON.stringify({ reservationId }),
         success: function (response) {
           const cardBody = button.closest(".card-body");
@@ -308,10 +333,19 @@ $(document).ready(function () {
     }
 
     function cancelReservation(reservationId, button) {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showLoginModal();
+        return;
+      }
+
       $.ajax({
         url: "/api/cancel-reservation",
         method: "POST",
         contentType: "application/json",
+        headers: {
+          Authorization: `Bearer ${token}`, // Pass token in the Authorization header
+        },
         data: JSON.stringify({ reservationId }),
         success: function () {
           button.prop("disabled", true).text("Cancelled");
@@ -324,6 +358,7 @@ $(document).ready(function () {
       });
     }
 
+    // Fetch reservations when page is loaded
     fetchReservations();
   } else {
     fetchCarpenters();

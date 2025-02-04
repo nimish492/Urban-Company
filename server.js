@@ -9,6 +9,7 @@ const User = require("./models/user"); // Import User model
 const Routes = require("./routes");
 const http = require("http");
 const socketIo = require("socket.io");
+require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app); // Create HTTP server
@@ -20,7 +21,6 @@ const io = socketIo(server, {
 });
 app.set("io", io);
 app.use(express.static("public"));
-app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
 
 // Database connection
 mongoose
-  .connect("mongodb://localhost:27017/theUrbanCompany", {
+  .connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -74,7 +74,7 @@ app.post("/api/login", async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
+    // ❌ No cookies, just send token in response
     res.json({ message: "Login successful", token });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -83,7 +83,6 @@ app.post("/api/login", async (req, res) => {
 
 // Logout Route
 app.post("/api/logout", (req, res) => {
-  res.clearCookie("token");
   res.json({ message: "Logged out successfully" });
 });
 

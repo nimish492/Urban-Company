@@ -80,3 +80,18 @@ button:hover {
 .status-pending {
   color: grey;
 }
+
+@media (max-width: 370px) {
+  .logo {
+    font-size: 1rem;
+  }
+  .nav-link {
+    margin-right: 1rem;
+  }
+}
+
+@media (max-width: 650px) {
+  h1 {
+    font-size: 1rem;
+  }
+}

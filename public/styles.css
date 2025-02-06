@@ -17,6 +17,10 @@ body {
   font-style: normal;
   margin: 0 30px;
 }
+.my-5 {
+  margin-top: 5.5rem !important;
+  margin-bottom: -5rem !important;
+}
 .nav-link {
   margin-right: 3rem;
 }

@@ -4,15 +4,14 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");
-const User = require("./models/user"); // Import User model
+const User = require("./models/user");
 const Routes = require("./routes");
 const http = require("http");
 const socketIo = require("socket.io");
 require("dotenv").config();
 
 const app = express();
-const server = http.createServer(app); // Create HTTP server
+const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
     origin: "*",
@@ -24,7 +23,6 @@ app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(cors());
 
-// Serve Socket.IO client script (optional, not needed for most cases)
 app.get("/socket.io/socket.io.js", (req, res) => {
   res.sendFile(
     path.join(
@@ -37,14 +35,12 @@ app.get("/socket.io/socket.io.js", (req, res) => {
   );
 });
 
-// Listen for WebSocket connections
 io.on("connection", (socket) => {
   console.log("New client connected");
 
-  // Example real-time event
   socket.on("slotUpdated", (data) => {
     console.log("Slot updated:", data);
-    io.emit("slotUpdated", data); // Broadcast to all clients
+    io.emit("slotUpdated", data);
   });
 
   socket.on("disconnect", () => {
@@ -52,7 +48,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Database connection
 mongoose
   .connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
@@ -61,7 +56,6 @@ mongoose
   .then(() => console.log("MongoDB connected successfully"))
   .catch((err) => console.log("Database connection failed:", err));
 
-// ✅ Login Route
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -74,21 +68,17 @@ app.post("/api/login", async (req, res) => {
       expiresIn: "1h",
     });
 
-    // ❌ No cookies, just send token in response
     res.json({ message: "Login successful", token });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-// Logout Route
 app.post("/api/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// Routes
 app.use("/api", Routes);
 
-// Start the server with `server.listen`, NOT `app.listen`
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

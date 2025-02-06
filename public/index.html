@@ -15,14 +15,14 @@
     <nav class="navbar bg-dark mx-0 my-0 py-3 fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand text-white logo" href="#">Urban Company</a>
-            <!-- Dropdown wrapper with dropstart so the menu opens to the left -->
+
             <div class="dropdown dropstart ms-auto">
-                <!-- Toggler: clicking the icon opens the dropdown -->
+
                 <a class="nav-link dropdown-toggle text-body" href="#" id="dropdownMenuButton" role="button"
                     data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-bars-progress fa-2x"></i>
                 </a>
-                <!-- Dropdown menu with two items -->
+
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <li><a class="dropdown-item history" href="/review.html">History</a></li>
                     <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
@@ -30,6 +30,13 @@
             </div>
         </div>
     </nav>
+    <div class="alert alert-warning alert-dismissible fade show my-5" id="alert" role="alert">
+        <strong>Demo User? </strong>
+        <p> Credentials:<br>username:<strong>test</strong><br>
+            password:<strong>test</strong></p>
+
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 
 
 
@@ -39,8 +46,6 @@
         <div id="carpenter-list" class="row justify-content-center w-100 g-4"></div>
     </div>
 
-    <!-- Offcanvas (Slot List) -->
-    <!-- Offcanvas (Slot List) -->
     <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="slotOffcanvas"
         aria-labelledby="slotOffcanvasLabel">
         <div class="offcanvas-header">
@@ -49,7 +54,6 @@
         </div>
         <div class="offcanvas-body">
             <ul class="list-group" id="slot-list">
-                <!-- Slots will be dynamically loaded here -->
             </ul>
 
 
@@ -58,7 +62,7 @@
 
 
 
-    <!-- Login Modal -->
+
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -85,48 +89,45 @@
 
 
     <footer class="text-center bg-body-tertiary">
-        <!-- Grid container -->
+
         <div class="container pt-4">
-            <!-- Section: Social media -->
+
             <section class="mb-4">
-                <!-- Facebook -->
+
                 <a data-mdb-ripple-init class="btn btn-link btn-floating btn-lg text-body m-1" href="#!" role="button"
                     data-mdb-ripple-color="dark"><i class="fab fa-facebook-f"></i></a>
 
-                <!-- Twitter -->
                 <a data-mdb-ripple-init class="btn btn-link btn-floating btn-lg text-body m-1" href="#!" role="button"
                     data-mdb-ripple-color="dark"><i class="fab fa-twitter"></i></a>
 
-                <!-- Google -->
                 <a data-mdb-ripple-init class="btn btn-link btn-floating btn-lg text-body m-1" href="#!" role="button"
                     data-mdb-ripple-color="dark"><i class="fab fa-google"></i></a>
 
-                <!-- Instagram -->
+
                 <a data-mdb-ripple-init class="btn btn-link btn-floating btn-lg text-body m-1" href="#!" role="button"
                     data-mdb-ripple-color="dark"><i class="fab fa-instagram"></i></a>
 
-                <!-- Linkedin -->
                 <a data-mdb-ripple-init class="btn btn-link btn-floating btn-lg text-body m-1" href="#!" role="button"
                     data-mdb-ripple-color="dark"><i class="fab fa-linkedin"></i></a>
 
             </section>
-            <!-- Section: Social media -->
-        </div>
-        <!-- Grid container -->
 
-        <!-- Copyright -->
+        </div>
+
+
+
         <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.05);">
             © 2025 Copyright:
             <a class="text-body" href="#">Urban Company</a>
         </div>
-        <!-- Copyright -->
+
     </footer>
 
 
     <script>
         document.getElementById('logoutBtn').addEventListener('click', function () {
-            localStorage.removeItem('authToken');  // Remove stored token
-            window.location.reload();  // Reload the page to update UI
+            localStorage.removeItem('authToken');
+            window.location.reload();
         });
     </script>
     <script src="/socket.io/socket.io.js"></script>

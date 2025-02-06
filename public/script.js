@@ -1,14 +1,13 @@
 $(document).ready(function () {
   $("#loginModal").on("hidden.bs.modal", function () {
-    $(".modal-backdrop").remove(); // Force remove the backdrop
-    $("body").removeClass("modal-open"); // Ensure scrolling is enabled
+    $(".modal-backdrop").remove();
+    $("body").removeClass("modal-open");
   });
 
   checkAuthStatus();
 
-  const socket = io(); // Establish Socket.IO connection with the server
+  const socket = io();
 
-  // Listen for slot updates from the server
   socket.on("slotUpdated", function (data) {
     const slotButton = $(`button[data-id="${data.slotId}"]`);
     if (slotButton.length) {
@@ -30,11 +29,10 @@ $(document).ready(function () {
 
   socket.on("disconnect", function () {
     console.warn("Server disconnected. Logging out...");
-    localStorage.removeItem("token"); // Remove token
-    location.reload(); // Refresh to force login
+    localStorage.removeItem("token");
+    location.reload();
   });
 
-  // Handle Login Form Submission
   $("#loginForm").submit(async function (e) {
     e.preventDefault();
 
@@ -60,14 +58,12 @@ $(document).ready(function () {
     }
   });
 
-  // Modify Logout
   $("#logoutBtn").click(function () {
     localStorage.removeItem("token");
     alert("Logged out successfully");
     location.reload();
   });
 
-  // Check if user is logged in
   function checkAuthStatus() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -80,13 +76,11 @@ $(document).ready(function () {
 
   checkAuthStatus();
 
-  // Show Bootstrap Login Modal
   function showLoginModal() {
     const loginModal = new bootstrap.Modal($("#loginModal")[0]);
     loginModal.show();
   }
 
-  // Fetch and display carpenters
   function fetchCarpenters() {
     $.ajax({
       url: "/api/carpenters",
@@ -174,18 +168,18 @@ $(document).ready(function () {
   }
 
   function bookSlot(slotId, button) {
-    const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+    const token = localStorage.getItem("token");
     if (!token) {
-      showLoginModal(); // If no token is found, prompt the user to log in
+      showLoginModal();
       return;
     }
 
     $.ajax({
-      url: "/api/book", // The API endpoint for booking
+      url: "/api/book",
       method: "POST",
       contentType: "application/json",
       headers: {
-        Authorization: `Bearer ${token}`, // Add the token to the Authorization header
+        Authorization: `Bearer ${token}`,
       },
       data: JSON.stringify({ slotId }),
       success: function () {
@@ -219,7 +213,7 @@ $(document).ready(function () {
         url: `/api/reservations`,
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`, // Pass token in the Authorization header
+          Authorization: `Bearer ${token}`,
         },
         success: function (data) {
           const reservationList = $("#reservation-list").empty();
@@ -303,21 +297,18 @@ $(document).ready(function () {
         method: "POST",
         contentType: "application/json",
         headers: {
-          Authorization: `Bearer ${token}`, // Pass token in the Authorization header
+          Authorization: `Bearer ${token}`,
         },
         data: JSON.stringify({ reservationId }),
         success: function (response) {
           const cardBody = button.closest(".card-body");
 
-          // Remove confirm & cancel buttons
           cardBody.find(".confirm-btn, .cancel-btn").remove();
 
-          // Add thank you message dynamically
           cardBody.append(
             '<p class="thank-you-message text-success">Thank you for choosing me</p>'
           );
 
-          // Update status text and color dynamically
           const statusElement = cardBody
             .closest(".card")
             .find(".status-pending, .status-booked");
@@ -344,7 +335,7 @@ $(document).ready(function () {
         method: "POST",
         contentType: "application/json",
         headers: {
-          Authorization: `Bearer ${token}`, // Pass token in the Authorization header
+          Authorization: `Bearer ${token}`,
         },
         data: JSON.stringify({ reservationId }),
         success: function () {
@@ -358,7 +349,6 @@ $(document).ready(function () {
       });
     }
 
-    // Fetch reservations when page is loaded
     fetchReservations();
   } else {
     fetchCarpenters();

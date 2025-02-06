@@ -7,21 +7,19 @@ const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
-// ✅ Middleware for JWT Authentication
 const authenticate = (req, res, next) => {
   const token = req.headers["authorization"]?.split(" ")[1];
-  console.log("Token received:", token); // Log to see if token is received correctly
+  console.log("Token received:", token);
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   jwt.verify(token, "your-secret-key", (err, decoded) => {
     if (err) return res.status(403).json({ message: "Invalid Token" });
     req.userId = decoded.userId;
-    console.log("Decoded User ID:", req.userId); // Log to see the decoded userId
+    console.log("Decoded User ID:", req.userId);
     next();
   });
 };
 
-// ✅ Fetch all carpenters
 router.get("/carpenters", async (req, res) => {
   try {
     const carpenters = await Carpenter.find();
@@ -33,7 +31,6 @@ router.get("/carpenters", async (req, res) => {
   }
 });
 
-// ✅ Fetch all slots for a given carpenter
 router.get("/slots/:carpenterId", async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.carpenterId)) {
@@ -55,7 +52,6 @@ router.get("/slots/:carpenterId", async (req, res) => {
   }
 });
 
-// ✅ Book a slot (Fixed)
 router.post("/book", authenticate, async (req, res) => {
   try {
     console.log("User ID from JWT:", req.userId);
@@ -63,7 +59,6 @@ router.post("/book", authenticate, async (req, res) => {
     const { slotId } = req.body;
     const userId = req.userId;
 
-    // Validate slotId and userId
     if (
       !mongoose.Types.ObjectId.isValid(userId) ||
       !mongoose.Types.ObjectId.isValid(slotId)
@@ -82,12 +77,10 @@ router.post("/book", authenticate, async (req, res) => {
       carpenterId: slot.carpenterId,
     });
 
-    // Mark the slot as unavailable and save both documents
     slot.isAvailable = false;
     await slot.save();
     await reservation.save();
 
-    // Notify all connected clients about the slot update
     const io = req.app.get("io");
     if (io) {
       io.emit("slotUpdated", { slotId, isAvailable: false });
@@ -100,7 +93,6 @@ router.post("/book", authenticate, async (req, res) => {
   }
 });
 
-// ✅ Fetch user reservations
 router.get("/reservations", authenticate, async (req, res) => {
   try {
     const userId = req.userId;
@@ -121,8 +113,6 @@ router.get("/reservations", authenticate, async (req, res) => {
   }
 });
 
-// ✅ Cancel Reservation
-// ✅ Cancel Reservation (with real-time update)
 router.post("/cancel-reservation", authenticate, async (req, res) => {
   try {
     const { reservationId } = req.body;
@@ -139,12 +129,10 @@ router.post("/cancel-reservation", authenticate, async (req, res) => {
     }
 
     if (reservation.slotId) {
-      // Update the slot's availability to true
       await Slot.findByIdAndUpdate(reservation.slotId._id, {
         isAvailable: true,
       });
 
-      // Notify all connected clients that the slot is now available
       const io = req.app.get("io");
       if (io) {
         io.emit("slotUpdated", {
@@ -154,7 +142,6 @@ router.post("/cancel-reservation", authenticate, async (req, res) => {
       }
     }
 
-    // Delete the reservation
     await Reservation.findByIdAndDelete(reservationId);
     res.json({ message: "Reservation cancelled successfully" });
   } catch (error) {
@@ -162,7 +149,6 @@ router.post("/cancel-reservation", authenticate, async (req, res) => {
   }
 });
 
-// ✅ Confirm Reservation
 router.post("/confirm-reservation", authenticate, async (req, res) => {
   try {
     const { reservationId } = req.body;
